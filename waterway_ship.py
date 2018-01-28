@@ -1,32 +1,3 @@
-def Waterway_Whole(a,b,x,y):
-    Length = 0
-    for i in range(0,y):
-        Length += a[i]
-    W_E = int(b[0])
-    W_O = int(b[x - 1])
-    return [int(Length),int(W_E),int(W_O)]
-
-def W(x,input_para):
-    w = []
-    for i in range(0,x):
-        a = input_para.readline()
-        w.append(int(int(a[:len(a) - 1])/30))
-    return w
-
-def H(y,input_para):
-    h = []
-    for i in range(0,y):
-        a = input_para.readline()
-        h.append(int(int(a[:len(a) - 1])/30))
-    return h
-
-def depth_one(z,input_para):
-    dep = []
-    for i in range(0,z):
-        a = input_para.readline()    
-        dep.append(int(int(a[:len(a) - 1])/30))
-    return dep
-
 def SLM(x,a,b):
     d_slm = []                                           #建立按SLM规则转换后的分段长度数组
     for i in range(0,x):
@@ -529,12 +500,64 @@ def Ship_Size(i,y,Type,DWT):
             
 #定义船类型，Ls=1，Lm=2，Ll=3. 其中L已经转化为以元胞为单位的长度
 def Ship_Type(L,v):
-    if (L == 1 or L == 2) and v <= 6:
-        return 1
-    elif (L <= 6 and L >= 3) and v <= 16:
-        return 2
-    elif L > 6 and v <= 12:
-        return 3
-    else:
-        return 0                        #本元胞自动机中不存在该船型
+        if (L == 1 or L == 2) and v <= 6:
+                return 1
+        elif (L <= 6 and L >= 3) and v <= 16:
+                return 2
+        elif L > 6 and v <= 12:
+                return 3
+        else:
+                return 0                        #本元胞自动机中不存在该船型
+
+def hs(DWT):
+        if DWT == 1000:
+                return 10
+        elif DWT == 3000:
+                return 11.6
+        elif DWT == 5000:
+                return 13.26
+        elif DWT == 10000:
+                return 15.03
+        elif DWT == 20000:
+                return 18.67
+        elif DWT == 30000:
+                return 22.3
+        elif DWT == 50000:
+                return 24.3
+        elif DWT == 70000:
+                return 24.3
+        elif DWT == 100000:
+                return 25
+        elif DWT == 120000:
+                return 24.7
+        elif DWT == 150000:
+                return 25.3
+
+def pdv_(L1,L2,a,x):
+        for i in range(1,x + 1):
+                if a[L1][L2 + i] != 0:
+                        return i
+                else:
+                        return 0
+def pdv__(L1,L2,a,x):
+        for i in range(1,x + 1):
+                if a[L1][L2 + 1] == '*':
+                        return i
+                else:
+                        return 0
+
+def ifovertaking(a,m,v,row,col):
+        #判断是否需要追越前船
+        pd = True
+        i = 1
+        while pd:
+                if a[row[m - 1]][col[m - 1] + i] != 0 and a[row[m - 1]][col[m - 1] + i] != '*':
+                        k = a[row[m - 1]][col[m - 1] + i]
+                        pd = False
+                else:
+                        i = i + 1
+        if v[m - 1] > v[k]:
+                return 1
+        else:
+                return 0
 

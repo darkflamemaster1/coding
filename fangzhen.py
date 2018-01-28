@@ -6,7 +6,7 @@ import random,os,math
 import safe as sf
 import waterway_ship as ws
 import numpy as np
-import time
+
 #import matplotlib
 
 #try:
@@ -26,7 +26,8 @@ input_para = open('input_data.txt')
 Shipnum = input_para.readline()
 ShipNum = int(Shipnum[:len(Shipnum) - 1])
 ShipType = [([0] * 4) for i in range(ShipNum)]
-v = [0] * ShipNum
+v = [0] * ShipNum             #设计航速
+v_sjhs = [0] * ShipNum
 for i in range(0,ShipNum):
         Type = input_para.readline()
         Type = int(Type[:len(Type) - 1])             #杂货船=1，散货船=2，油船=3，集装箱船=4
@@ -34,18 +35,18 @@ for i in range(0,ShipNum):
         DWT = int(DWT[:len(DWT) - 1])              #单位：t
         vel = input_para.readline()
         v[i] = int(vel[:len(vel) - 1])
+        v_sjhs[i] = ws.hs(DWT)
         for j in range(0,4):
                 ShipType[i][j] = ws.Ship_Size(i,j,Type,DWT)               #获取第i类船的船型信息
 
 #定义元胞尺寸
 #L_cell=30
 
-#=================================开始仿真========================================
 #定义空间大小和时间步
 L = input_para.readline()
 L = int(int(L[:len(L) - 1])/30)
 a = [(['*'] * L) for i in range(L)]
-Time = 60  #仿真1分钟
+T = 60  #仿真1分钟
 
 b = [([0] * L) for i in range(L)]                      #元胞自动机规则，整体更新建立b数组来保存t时刻的值
 
@@ -163,7 +164,7 @@ k = [0] * ShipNum
 for i in range(0,ShipNum_inbound):        #将inbound的船只面向对象
         ves[i] = Vessel(int(ShipType[i][0]/30),int(ShipType[i][1]/30),ShipType[i][2],ShipType[i][3],v[i])
         if FX == 1:
-                k[i] = 0
+                k[i] = 1
         else:   
                 k[i] = random.randint(0,2)                               #初始方向随机生成,k=1 or k=0
                 
@@ -229,24 +230,22 @@ if FX == 1:                                #单向航道
                                         a[i][j] = '*'
                                 else:
                                         a[i][j] = 0
+        
+        L_B = int((x3 - x2) * np.tan(fai) + W +(R + W/2) * np.tan(fai) * np.tan(fai))
         #创建行和列数组分别存放每艘船的位置信息。进行初始化，便于之后进行演化
         row = [0] * ShipNum
         col = [0] * ShipNum
         for m in range(1,ShipNum + 1):
                 row[m - 1] = random.randint(0,L)
+                col[m - 1] = random.randint(0,L1)
                 pd = True
                 while pd:
-                        if (row[m - 1] >= 0 and row[m - 1] <= W and a[row[m - 1]][0] == 0) :
-                                a[row[m - 1]][0] = m
-                                col[m - 1] = 0
-                                pd = False
-                        elif (row[m - 1] <= ((x3 - x2) * np.tan(fai) + W) and row[m - 1] >= (x3 - x2) * np.tan(fai) and a[row[m - 1]][L-1] == 0):
-                                a[row[m - 1]][L - 1] = m
-                                col[m - 1] = L - 1
+                        if (row[m - 1] >= 0 and row[m - 1] <= W and a[row[m - 1]][col[m - 1]] == 0):
+                                a[row[m - 1]][col[m - 1]] = m
                                 pd = False
                         else:
                                 row[m - 1] = random.randint(0,L)
-
+                                col[m - 1] = random.randint(0,L1)
 
 
         f = open('oneway_waterway.txt','w')
@@ -256,3 +255,72 @@ if FX == 1:                                #单向航道
                 f.write('\n')
         f.close()                
 
+        #=============================================（单向航道）开始仿真==================================================
+        for time in range(0,T):
+                for m in range(1,ShipNum + 1):
+                        
+                        n = m - 1 
+                        #判断前方一定范围内是否有船
+                        l = a[row[n]][col[n]] + ves[i].__s2__() + v[n]
+                        for i in range(0,l):
+                                if a[row[n]][col[n] + i] != 0 and a[row[n]][col[n] +i] != '*':
+                                        if_have_ship = 1
+                                else:
+                                        if_have_ship = 0
+                        #判断前方一定范围内是否超出航道
+                        for i in range(0,l):
+                                if a[row[n]][col[n] + i] == '*'
+                                        if_out_of_waterway = 1
+                                else:
+                                        if_out_of_waterway = 0
+
+                        if if_have_ship == 1:
+                                #判断是否需要追越前船
+                                overtaking = ws.ifovertaking(a,m,v,row,col)
+                                #获取前船的编号
+                                foreship_Number = a[row[n]][col[n] + overtaking]
+                                if overtaking != 0:     #如果需追越则先换道再追越
+                                        if (row[n] - ves[n].__s1__() <= 0 or a[row[n] - ves[n].__s1__()][col[n]] != 0) and a[row[n] + 1][col[n] + 1] == 0:
+                                                a[row[n] + 1][col[n] + 1 + v[n]] = m
+                                                a[row[n]][col[n]] = 0
+                                        elif (a[row[n] + ves[n].__s1__()][col[n]] != 0 or row[n] + ves[n].__s1__() >= L_B) and a[row[n] - 1][col[n] + 1] == 0:
+                                                a[row[n] - 1][col[n] + 1 + v[n]] = m
+                                                a[row[n]][col[n]] = 0
+                                else: 
+                                        v[n] = int((v[n] + v[foreship_Number])/2-1) 
+                                        a[row[n]][col[n] + v[n]] = m
+                                        a[row[n]][col[n]] = 0
+                        elif if_have_ship == 0 and if_out_of_waterway == 1:
+                                if v[n] == 1 and a[row[n] + 1][col[n] + 1] == 0:
+                                        a[row[n] + 1][col[n] + 1] = m
+                                        a[row[n]][col[n]] = 0
+                                elif v[n] > 1 :
+                                        pd = True
+                                        while pd:
+                                                i = 1
+                                                if a[row[n]][col[n] + i] == '*':
+                                                        p = i
+                                                        pd = False
+                                                else:
+                                                        i = i + 1
+                                        v[n] = int(v[n] - (v[n] - 1)/p)
+                                        if a[row[n] + 1][col[n] + v[n]] == 0:
+                                                a[row[n] + 1][col[n] + v[n]] = m
+                                                a[row[n]][col[n]] = 0
+                                        elif a[row[n] + 1][col[n] + 1] == 0:
+                                                a[row[n] + 1][col[n] + 1] = m
+                                                a[row[n]][col[n]] = 0
+                                        else:
+                                                a[row[n]][col[n] + v[n]] = m
+                                                a[row[n]][col[n]] = 0
+                        elif if_have_ship ==0 and if_out_of_waterway == 0:
+                                a[row[n]][col[n] + v[n]] = m
+                                a[row[n]][col[n]] = 0
+                                if v[n] < v_sjhs[n]:
+                                        v[n] = v[n] + 1
+                        fl = open('','w')
+                        for i in range(0,L):
+                                for j in range(0,L):
+                                        fl.write(str(a[i][j]))
+                                fl.write('\n')
+                        fl.close()      
