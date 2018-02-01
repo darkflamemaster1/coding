@@ -546,18 +546,15 @@ def pdv__(L1,L2,a,x):
                 else:
                         return 0
 
-def ifovertaking(a,m,v,row,col):
+def ifovertaking(a,n,v,row,col,l,ves):
         #判断是否需要追越前船
-        pd = True
-        i = 1
-        while pd:
-                if a[row[m - 1]][col[m - 1] + i] != 0 and a[row[m - 1]][col[m - 1] + i] != '*':
-                        k = a[row[m - 1]][col[m - 1] + i]
-                        pd = False
-                else:
-                        i = i + 1
-        if v[m - 1] > v[k]:
-                return 1
+        k = 0
+        for i in range(1,l + 1):
+                if a[row[n]][col[n] + i + ves[n].__s2__() + v[n]] != 0 and a[row[n]][col[n] + i + ves[n].__s2__() + v[n]] != '*':
+                        k = a[row[n]][col[n] + i + ves[n].__s2__()]
+                        break
+        if v[n] > v[k - 1]:
+                return k
         else:
                 return 0
 
