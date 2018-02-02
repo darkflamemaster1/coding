@@ -1,23 +1,24 @@
-def SLM(x,a,b):
-    d_slm = []                                           #建立按SLM规则转换后的分段长度数组
-    for i in range(0,x):
-        if i != 0 and i != (x - 1) and a[i - 1] < a[i] and a[i] < a[i + 1]:
-            d_slm.append(b[i] + b[i + 1])
-        elif i != 0 and i != (x - 1) and a[i - 1] > a[i] and a[i]>a[i + 1]:
-            d_slm.append(b[i + 1]+b[i + 2])
-        elif i != 0 and i != (x - 1) and a[i] > a[i + 1] and a[i]>a[i - 1]:
-            d_slm.append(b[2 * i])
-        elif i != 0 and i != (x - 1) and a[i] < a[i + 1] and a[i]<a[i - 1]:
-            d_slm.append(b[i - 1] + b[i] + b[i + 1])
-        elif i == 0 and a[0] < a[1]:
-            d_slm.append(b[0] + b[1])
-        elif i == 0 and a[0] > a[1]:
-            d_slm.append(b[0])
-        elif i == (x - 1) and a[i] > a[i-1]:
-            d_slm.append(b[x-1])
-        elif i == (x - 1) and a[i] < a[i - 1]:
-            d_slm.append(b[2 * x - 2] + b[2 * x - 3])
-    return d_slm
+
+#def SLM(x,a,b):
+ #   d_slm = []                                           #建立按SLM规则转换后的分段长度数组
+  #  for i in range(0,x):
+   #     if i != 0 and i != (x - 1) and a[i - 1] < a[i] and a[i] < a[i + 1]:
+    #        d_slm.append(b[i] + b[i + 1])
+     #   elif i != 0 and i != (x - 1) and a[i - 1] > a[i] and a[i]>a[i + 1]:
+      #      d_slm.append(b[i + 1]+b[i + 2])
+       # elif i != 0 and i != (x - 1) and a[i] > a[i + 1] and a[i]>a[i - 1]:
+        #    d_slm.append(b[2 * i])
+       # elif i != 0 and i != (x - 1) and a[i] < a[i + 1] and a[i]<a[i - 1]:
+        #    d_slm.append(b[i - 1] + b[i] + b[i + 1])
+       # elif i == 0 and a[0] < a[1]:
+        #    d_slm.append(b[0] + b[1])
+       # elif i == 0 and a[0] > a[1]:
+        #    d_slm.append(b[0])
+       # elif i == (x - 1) and a[i] > a[i-1]:
+        #    d_slm.append(b[x-1])
+       # elif i == (x - 1) and a[i] < a[i - 1]:
+       #     d_slm.append(b[2 * x - 2] + b[2 * x - 3])
+   # return d_slm
 
 
 
@@ -498,17 +499,6 @@ def Ship_Size(i,y,Type,DWT):
                 else:
                         print('Data error!!!')
             
-#定义船类型，Ls=1，Lm=2，Ll=3. 其中L已经转化为以元胞为单位的长度
-def Ship_Type(L,v):
-        if (L == 1 or L == 2) and v <= 6:
-                return 1
-        elif (L <= 6 and L >= 3) and v <= 16:
-                return 2
-        elif L > 6 and v <= 12:
-                return 3
-        else:
-                return 0                        #本元胞自动机中不存在该船型
-
 def hs(DWT):
         if DWT == 1000:
                 return 10
@@ -533,28 +523,15 @@ def hs(DWT):
         elif DWT == 150000:
                 return 25.3
 
-def pdv_(L1,L2,a,x):
-        for i in range(1,x + 1):
-                if a[L1][L2 + i] != 0:
-                        return i
-                else:
-                        return 0
-def pdv__(L1,L2,a,x):
-        for i in range(1,x + 1):
-                if a[L1][L2 + 1] == '*':
-                        return i
-                else:
-                        return 0
-
-def ifovertaking(a,n,v,row,col,l,ves):
-        #判断是否需要追越前船
-        k = 0
-        for i in range(1,l + 1):
-                if a[row[n]][col[n] + i + ves[n].__s2__() + v[n]] != 0 and a[row[n]][col[n] + i + ves[n].__s2__() + v[n]] != '*':
-                        k = a[row[n]][col[n] + i + ves[n].__s2__()]
-                        break
-        if v[n] > v[k - 1]:
-                return k
-        else:
-                return 0
+#def ifovertaking(a,n,v,row,col,l,ves):
+#        #判断是否需要追越前船
+ #       k = 0
+  #      for i in range(1,l + 1):
+   #             if a[row[n]][col[n] + i + ves[n].__s2__() + v[n]] != 0 and a[row[n]][col[n] + i + ves[n].__s2__() + v[n]] != '*':
+    #                    k = a[row[n]][col[n] + i + ves[n].__s2__()]
+     #                   break
+      #  if v[n] > v[k - 1]:
+       #         return k
+        #else:
+         #       return 0
 
