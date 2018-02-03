@@ -190,6 +190,7 @@ if FX == 1:                                #单向航道
                 L_B = int((x3 - x1) * np.tan(fai) + W)
         elif xs == 'sancha':
                 L_B = int(W + (L - x1) * np.tan(fai))
+
         #创建行和列数组分别存放每艘船的位置信息。进行初始化，便于之后进行演化
         row = [0] * ShipNum
         col = [0] * ShipNum
@@ -215,75 +216,119 @@ if FX == 1:                                #单向航道
 
         #=============================================（单向航道）开始仿真==================================================
         for time in range(0,T):
-                 for m in range(1,ShipNum + 1):
+                for m in range(1,ShipNum + 1):
                         n = m - 1
                         LY_L = int(ves[n].__s2__() + v[n])     #邻域长度
                         LY_B = int(ves[n].__s1__())            #邻域半宽度
-                        f_ship = []                       #记录邻域前进范围内前船的编号　
-                        col_f_ship = []                   #前船距离本船的列距离
-                        free_cell_num = 0                 #空元胞个数
-                        ocean = False                    #前方前进范围内距离航道边缘的距离
-                        slow_down = False                 #判断是否减速
-                        speed_up = False                  #判断是否加速
-                        lane_change = False               #判断是否变道
-                        for i in range(row[n] - LY_B,row[n] + LY_B + 1):             #在邻域范围内循环查找
-                                for j in range(col[n] + LY_L,col[n] + LY_L + v[n]):
-                                        if j <= L or row[n] + LY_B + 1 <= L_B:
+                        f_ship = []                            #记录邻域前进范围内前船的编号　
+                        col_f_ship = []                        #前船距离本船的列距离
+                        row_f_ship = []                        #前船距离本船的行距离
+                        free_cell_num = 0                      #空元胞个数
+                        ocean = False                          #前方前进范围内距离航道边缘的距离
+                        lane_change_L1 = False                 #判断是否在直道变道
+                        lane_change_L2 = False                 #判断是否在斜道变道
+
+                        if col[n] < x1 or col[n] > x4:
+                                for i in range(row[n] - LY_B,row[n] + LY_B + 1):             #在邻域范围内循环查找
+                                        for j in range(col[n] + LY_L,col[n] + LY_L + v[n]):
                                                 if a[i][j] != 0 and a[i][j] != '*':      #判断邻域前进的范围内是否有船只
                                                         f_ship.append(a[i][j])
                                                         col_f_ship.append(j)
                                                         if v[n] > 1:
                                                                 v[n] = v[n] - 1
-                                                        else:
-                                                                v[n] = v[n]
-                                                elif a[i][j] == 0:                       #计算邻域范围内的空元胞个数
-                                                        free_cell_num = free_cell_num + 1
 
                                                 if a[i][j] == '*':                       #判断邻域范围内下一时刻是否会出航道
                                                         ocean = True
                                                         if v[n] > 1:
                                                                 v[n] = v[n] - 1
-                                        else:
-                                                a[row[n]][L - 1] = m
-
-                        if free_cell_num == int(v[n] * (1 + 2 * LY_B)):
+                        elif col[n] >= x1 and col[n] <= x4:
+                                for i in range(row[n] + int(LY_L * np.sin(fai)),row[n] + int(LY_L * np.sin(fai)) + int(v[n] * np.sin(fai))):
+                                        for j in range(col[n] + int(LY_L * np.cos(fai)),col[n] + int(LY_L * np.cos(fai)) + int(v[n] * np.cos(fai))):
+                                                if a[i][j] != 0 and a[i][j] != '*':
+                                                        f_ship.append(a[i][j])
+                                                        col_f_ship.append(j)
+                                                        row_f_ship.append(i)
+                                                        if v[n] > 1:
+                                                                v[n] = v[n] - 1
+                                                if a[i][j] == '*':
+                                                        ocean = True
+                                                        if v[n] > 1:
+                                                                v[n] = v[n] - 1
+                                                        
+                        if LY_B == 0 and len(f_ship) == 0 and ocean == False:                        
                                 if v[n] < v_sjhs[n]:
                                         v[n] = v[n] + 1
-                        if f_ship:
+                        elif LY_B > 0 and len(f_ship) == 0 and ocean == False:
+                                if v[n] < v_sjhs[n]:
+                                        v[n] = v[n] + 1
+
+                        if len(f_ship) != 0 and (col[n] < x1 or col[n] > x4):
                                 for i in range(0,len(f_ship)):
                                         if v[n] > v[f_ship[i] - 1]:
-                                                lane_change = True
+                                                lane_change_L1 = True
+                        elif len(f_ship) != 0 and (col[n] <= x4 and col[n] >= x1):
+                                for i in range(0,len(f_ship)):
+                                        print(v[f_ship[i] - 1])
+                                        if v[n] > v[f_ship[i] - 1]:
+                                                lane_change_L2 = True
                         
 
-                        while lane_change:
-                                row_up = int(row[n] - LY_B * 2)
-                                row_down = int(row[n] + LY_B * 2)
+                        while lane_change_L1:
+                                row_up = int(row[n] - LY_B * 2 - 1)
+                                row_down = int(row[n] + LY_B * 2 + 1)
                                 if row_up < 0  or a[row_up][col[n] + min(col_f_ship)] != 0 or a[row[n]][col[n] + ves[n].__s2__() + v[n]] == '*':
-                                        row_next_time = int(row[n] + LY_B)
-                                        col_next_time = int(col[n] + v[n] + ves[n].__s2__())
+                                        row_next_time = int(row[n] + v[n] * np.cos(45 * np.pi/180))
+                                        col_next_time = int(col[n] + v[n] * np.sin(45 * np.pi/180) + ves[n].__s2__())
                                         a[row_next_time][col_next_time] = m
                                         row[n] = row_next_time
                                         col[n] = col_next_time
-                                        lane_change = False
-                                elif row_down > W or a[row_down][col[n] + min(col_f_ship)] !=0 or a[row[n]][col[n] + ves[n].__s2__() + v[n]] =='*': 
-                                        row_next_time = int(row[n] - LY_B)
-                                        col_next_time = int(col[n] + v[n] + ves[n].__s2__())
+                                        lane_change_L1 = False
+                                elif row_down > W or a[row_down][col[n] + min(col_f_ship)] != 0 or a[row[n]][col[n] + ves[n].__s2__() + v[n]] =='*': 
+                                        row_next_time = int(row[n] - v[n] * np.cos(45 * np.pi/180))
+                                        col_next_time = int(col[n] + v[n] * np.sin(45 * np.pi/180)+ ves[n].__s2__())
                                         a[row_next_time][col_next_time] = m
                                         row[n] = row_next_time
                                         col[n] = col_next_time
-                                        lane_change = False
-                       
-                        if a[row[n]][col[n] + v[n] + ves[n].__s2__()] == 0 and ocean == False:
-                                a[row[n]][col[n] + v[n] + ves[n].__s2__()] = m    
+                                        lane_change_L1 = False
+                        
+                        while lane_change_L2:
+                                if a[row[n] + int(v[n] * np.sin(fai))][col[n]] != 0 and a[row[n]][col[n] + int(v[n] * np.cos(fai))] == 0:
+                                        col_next_time = col[n] + int(v[n] * np.cos(fai))
+                                        a[row[n]][col_next_time] = m
+                                        col[n] = col_next_time
+                                        lane_change_L2 = False
+                                elif a[row[n]][col[n] + int(v[n] * np.cos(fai))] != 0 and a[row[n] + int(v[n] * np.sin(fai))][col[n]] == 0:
+                                        row_next_time = row[n] + int(v[n] * np.sin(fai))
+                                        a[row_next_time][col[n]] = m
+                                        row[n] = row_next_time
+                                        lane_change_L2 = False
+                                else:
+                                        lane_change_L2 = False
+                                                        
+                        if (col[n] < x1 or col[n] > x4) and a[row[n]][col[n] + v[n] + ves[n].__s2__()] == 0 and ocean == False:
+                                a[row[n]][col[n] + v[n] + ves[n].__s2__()] = m
                                 col[n] = col[n] + v[n] + ves[n].__s2__()
-                        elif ocean:
+                        elif (col[n] <= x4 and col[n] >= x1) and a[row[n] + int(LY_L * np.sin(fai))][col[n] + int(LY_L * np.cos(fai))] == 0 and ocean == False:
+                                row_next_time = row[n] + int(LY_L * np.sin(fai))
+                                col_next_time = col[n] + int(LY_L * np.cos(fai))
+                                a[row_next_time][col_next_time] = m
+                                row[n] = row_next_time
+                                col[n] = col_next_time
+                        elif ocean == True:
                                 for i in range(0,int(v[n] * np.sin(fai) + ves[n].__s2__())):
                                         for j in range(i,int(v[n] * np.cos(fai) + ves[n].__s2__())):
                                                 if a[row[n] + i][col[n] + j] == 0:
                                                         a[row[n] + i][col[n] + j] = m
                                                         row[n] = row[n] + i
                                                         col[n] = col[n] + j
-
+                del f_ship
+                del col_f_ship
+                del row_f_ship
+                del free_cell_num
+                del ocean
+                del lane_change_L1
+                del lane_change_L2
+ 
         fl = open('oneway_result.txt','w')
         for i in range(0,L):
                 for j in range(0,L):
